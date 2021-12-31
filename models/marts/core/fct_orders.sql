@@ -5,10 +5,18 @@ with orders_cte as(
 payments_cte as(
     select *
     from {{ ref('stg_payments') }}
+),
+order_payments_cte as(
+    select 
+    ORDERID,
+    sum(case when status = 'success' then AMOUNT else 0 end) as Amount
+    from payments_cte
+    group by 1
 )
 select
 orders_cte.order_id,
-sum(case when payments_cte.status = 'success' then payments_cte.AMOUNT else 0 end) as Amount
+orders_cte.customer_id,
+orders_cte.order_date,
+coalesce(order_payments_cte.Amount,0) as Amount
 from orders_cte
-left join payments_cte on payments_cte.ORDERID = orders_cte.order_id
-group by 1
+left join order_payments_cte on order_payments_cte.ORDERID = orders_cte.order_id
