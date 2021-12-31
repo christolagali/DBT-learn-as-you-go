@@ -7,9 +7,8 @@ payments_cte as(
     from {{ ref('stg_payments') }}
 )
 select
-orders_cte.customer_id,
 payments_cte.ORDERID,
-sum(payments_cte.AMOUNT) as Amount
+sum(case when payments_cte.status = 'success' then payments_cte.AMOUNT else 0 end) as Amount
 from payments_cte
 left join orders_cte on payments_cte.ORDERID = orders_cte.order_id
-group by 1,2
+group by 1
